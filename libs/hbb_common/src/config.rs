@@ -100,8 +100,10 @@ const CHARS: &[char] = &[
     'm', 'n', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 ];
 
-pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
-pub const PUBLIC_RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
+// pub const RENDEZVOUS_SERVERS: &[&str] = &["rs-ny.rustdesk.com"];
+// pub const PUBLIC_RS_PUB_KEY: &str = "OeVuKk5nlHiXp+APNn0Y3pC1Iwpwn44JGqrQCsWqmBw=";
+pub const RENDEZVOUS_SERVERS: &[&str] = &["13.230.35.85"];
+pub const PUBLIC_RS_PUB_KEY: &str = "DZQXi8dUVdVRUHEPpDPi0CJ+uLoa5DdWIgPAathZyAQ=";
 
 pub const RS_PUB_KEY: &str = match option_env!("RS_PUB_KEY") {
     Some(key) if !key.is_empty() => key,
@@ -744,10 +746,10 @@ impl Config {
         if !s.is_empty() {
             return vec![s];
         }
-        let s = Self::get_option("custom-rendezvous-server");
-        if !s.is_empty() {
-            return vec![s];
-        }
+        // let s = Self::get_option("custom-rendezvous-server");
+        // if !s.is_empty() {
+        //     return vec![s];
+        // }
         let s = PROD_RENDEZVOUS_SERVER.read().unwrap().clone();
         if !s.is_empty() {
             return vec![s];
