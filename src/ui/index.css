@@ -26,6 +26,10 @@ body {
     font-size: 0.9em;
 }
 
+#eye svg:hover {
+    color: #222222;
+}
+
 .left-pane {
     width: 200px;
     height: *;
