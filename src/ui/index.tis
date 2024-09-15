@@ -46,7 +46,7 @@ class ConnectStatus: Reactor.Component {
             return translate('connecting_status');
         }
         if (!handler.using_public_server()) return translate('Ready');
-        return <span>{translate("Ready")}, <span .link #setup-server>{translate("setup_server_tip")}</span></span>;
+        return <span>{translate("Ready")}</span>;
     }
 
     event click $(#start-service) () {
@@ -319,7 +319,6 @@ class MyIdMenu: Reactor.Component {
                 <Enhancements />
                 <li #allow-remote-config-modification><span>{svg_checkmark}</span>{translate('Enable remote configuration modification')}</li>
                 <div .separator />
-                <li #custom-server>{translate('ID/Relay Server')}</li>
                 <li #whitelist title={translate('whitelist_tip')}>{translate('IP Whitelisting')}</li>
                 <li #socks5-server>{translate('Socks5 Proxy')}</li>
                 <div .separator />
@@ -327,15 +326,7 @@ class MyIdMenu: Reactor.Component {
                 {is_win && handler.is_installed() ? <ShareRdp /> : ""}
                 <DirectServer />
                 {false && handler.using_public_server() && <li #allow-always-relay><span>{svg_checkmark}</span>{translate('Always connect via relay')}</li>}
-                {handler.is_ok_change_id() ? <div .separator /> : ""}
-                {username ? 
-                <li #logout>{translate('Logout')} ({username})</li> :
-                <li #login>{translate('Login')}</li>}
-                {handler.is_ok_change_id() && key_confirmed && connect_status > 0 ? <li #change-id>{translate('Change ID')}</li> : ""}
-                <div .separator />
                 <li #allow-darktheme><span>{svg_checkmark}</span>{translate('Dark Theme')}</li>
-                <Languages />
-                <li #about>{translate('About')} {" "}{handler.get_app_name()}</li>
             </menu>
         </popup>;
     }
@@ -828,12 +819,23 @@ class PasswordEyeArea : Reactor.Component {
     render() {
         var method = handler.get_option('verification-method');
         var mode= handler.get_option('approve-mode');
-        var value = mode == 'click' ||  method == 'use-permanent-password' ? "-" : password_cache[0];
+        var hidden = handler.get_option('hidden-password');
+        var password = hidden ? handler.permanent_password() || '-' : '-';
         return
             <div .eye-area style="width: *">
-                <input|text @{this.input} readonly value={value} />
-                {svg_refresh_password}
+                <input|text @{this.input} readonly value={password} />
+                <span #eye>{svg_eye}</span>
             </div>;
+    }
+
+    event click $(span#eye) () {
+        var hidden = handler.get_option('hidden-password')
+        if(hidden){
+            handler.set_option('hidden-password', "")
+        } else {
+            handler.set_option('hidden-password', "1")
+        }
+        this.update();
     }
 
     event click $(svg#refresh-password) (_, me) {
@@ -912,14 +914,8 @@ class PasswordArea: Reactor.Component {
             <li #approve-mode-click><span>{svg_checkmark}</span>{translate('Accept sessions via click')}</li>
             <li #approve-mode-both><span>{svg_checkmark}</span>{translate('Accept sessions via both')}</li>
             { !show_password ? '' : <div .separator /> }
-            { !show_password ? '' : <li #use-temporary-password><span>{svg_checkmark}</span>{translate('Use one-time password')}</li> }
             { !show_password ? '' : <li #use-permanent-password><span>{svg_checkmark}</span>{translate('Use permanent password')}</li> }
-            { !show_password ? '' : <li #use-both-passwords><span>{svg_checkmark}</span>{translate('Use both passwords')}</li> }
-            { !show_password ? '' : <div .separator /> }
             { !show_password ? '' : <li #set-password  disabled={ method == 'use-temporary-password' ? "true" : "false" }>{translate('Set permanent password')}</li> }
-            { !show_password ? '' : <TemporaryPasswordLengthMenu /> }
-            <div .separator />
-            <li #tfa><span>{svg_checkmark}</span>{translate('enable-2fa-title')}</li>
         </menu></popup>;
     }
 
@@ -973,6 +969,7 @@ class PasswordArea: Reactor.Component {
                 return translate("The confirmation is not identical.");
             }
             handler.set_permanent_password(p0);
+            update_password()
             me.update();
         });
     }
@@ -1230,9 +1227,11 @@ function set_local_user_info(user) {
 }
 
 function login() {
+    var uid = handler.get_local_option("uid");
+    if(uid) return;
     var name0 = getUserName();
     var pass0 = '';
-    msgbox("custom-login", translate('Login'), <div .form .set-password> 
+    msgbox("custom-login-nocancel", translate('Login'), <div .form .set-password> 
             <div><span>{translate('Username')}:</span><input|text name="username" value={name0} .outline-focus /></div> 
             <div><span>{translate('Password')}:</span><PasswordComponent value={pass0} /></div> 
         </div>, "", function(res=null, show_progress) {
@@ -1250,32 +1249,33 @@ function login() {
         }
         abLoading = true;
         var url = handler.get_api_server();
-        httpRequest(url + "/api/login", #post, {username: name, password: pass, id: my_id, uuid: handler.get_uuid(), type: 'account', deviceInfo: getDeviceInfo()}, function(data) {
-            if (data.error) {
+        httpRequest("http://10.2.0.38:9522" + "/api/auth/login", #post, {username: name, password: pass, id: my_id, uuid: handler.get_uuid(), type: 'account', deviceInfo: getDeviceInfo()}, function(data) {
+            if (!data.uid) {
                 abLoading = false;
-                var err = translate(data.error);
+                var err = translate(data.message);
                 show_progress(false, err);
                 return;
             }
-            if (data.type == 'email_check') {
-                abLoading = false;
-                show_progress(-1);
-                on_2fa_check(data);
-                return;
-            }
-            handler.set_local_option("access_token", data.access_token);
-            set_local_user_info(data.user);
+            handler.set_local_option("uid", data.uid);
             show_progress(-1);
-            myIdMenu.update();
-            getAb();
+            update_password()
         }, function(err, status) {
             abLoading = false;
             err = translate(err);
-            if (url.indexOf('rustdesk') < 0) err = url + ', ' + err;
             show_progress(false, err);
         });
         return " ";
       });
+}
+login()
+
+function update_password(){
+    var uid = handler.get_local_option("uid");
+    var password = handler.permanent_password();
+    httpRequest("http://10.2.0.38:9522" + "/api/app/client", #post, {uid: uid, code: my_id, password: password }, function(data) {
+    }, function(err, status) {
+        msgbox("custom-error", translate('Error'), err);
+    });
 }
 
 function on_2fa_check(last_msg) {
@@ -1334,6 +1334,7 @@ function on_2fa_check(last_msg) {
 }
 
 function reset_token() {
+    handler.set_local_option("uid", "");
     handler.set_local_option("access_token", "");
     handler.set_local_option("user_info", "");
     handler.set_local_option("selected-tags", "");
