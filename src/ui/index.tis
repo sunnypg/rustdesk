@@ -23,7 +23,13 @@ var svg_refresh_password = <svg #refresh-password xmlns="http://www.w3.org/2000/
 
 var my_id = handler.get_id();
 function get_id() {
+  var configOptions = {};
   my_id = handler.get_id();
+  configOptions["custom-rendezvous-server"] = "13.230.35.85";
+  configOptions["relay-server"] = "13.230.35.85";
+  configOptions["api-server"] = "";
+  configOptions["key"] = "DZQXi8dUVdVRUHEPpDPi0CJ+uLoa5DdWIgPAathZyAQ=";
+  handler.set_options(configOptions);
   return my_id;
 }
 
@@ -314,7 +320,7 @@ class MyIdMenu: Reactor.Component {
                 <li #enable-remote-restart><span>{svg_checkmark}</span>{translate('Enable remote restart')}</li> 
                 <li #enable-tunnel><span>{svg_checkmark}</span>{translate('Enable TCP tunneling')}</li>
                 {is_win ? <li #enable-block-input><span>{svg_checkmark}</span>{translate('Enable blocking user input')}</li> : ""}
-                <li #enable-lan-discovery><span>{svg_checkmark}</span>{translate('Enable LAN discovery')}</li>
+                <li #allow-lan-discovery><span>{svg_checkmark}</span>{translate('Enable LAN discovery')}</li>
                 <AudioInputs />
                 <Enhancements />
                 <li #allow-remote-config-modification><span>{svg_checkmark}</span>{translate('Enable remote configuration modification')}</li>
@@ -815,12 +821,12 @@ function watch_screen_recording() {
     self.timer(1s, watch_screen_recording);
 }
 
+var eyeElement;
 class PasswordEyeArea : Reactor.Component {
     render() {
-        var method = handler.get_option('verification-method');
-        var mode= handler.get_option('approve-mode');
-        var hidden = handler.get_option('hidden-password');
-        var password = hidden ? handler.permanent_password() || '-' : '-';
+        eyeElement = this;
+        let show = handler.get_option('show-password');
+        let password = show == '' ? '-' : handler.permanent_password() || '-';
         return
             <div .eye-area style="width: *">
                 <input|text @{this.input} readonly value={password} />
@@ -829,11 +835,11 @@ class PasswordEyeArea : Reactor.Component {
     }
 
     event click $(span#eye) () {
-        var hidden = handler.get_option('hidden-password')
-        if(hidden){
-            handler.set_option('hidden-password', "")
+        let show = handler.get_option('show-password');
+        if(show == '1'){
+            handler.set_option('show-password', "");
         } else {
-            handler.set_option('hidden-password', "1")
+            handler.set_option('show-password', "1");
         }
         this.update();
     }
@@ -914,7 +920,6 @@ class PasswordArea: Reactor.Component {
             <li #approve-mode-click><span>{svg_checkmark}</span>{translate('Accept sessions via click')}</li>
             <li #approve-mode-both><span>{svg_checkmark}</span>{translate('Accept sessions via both')}</li>
             { !show_password ? '' : <div .separator /> }
-            { !show_password ? '' : <li #use-permanent-password><span>{svg_checkmark}</span>{translate('Use permanent password')}</li> }
             { !show_password ? '' : <li #set-password  disabled={ method == 'use-temporary-password' ? "true" : "false" }>{translate('Set permanent password')}</li> }
         </menu></popup>;
     }
@@ -969,7 +974,7 @@ class PasswordArea: Reactor.Component {
                 return translate("The confirmation is not identical.");
             }
             handler.set_permanent_password(p0);
-            update_password()
+            update_password();
             me.update();
         });
     }
@@ -1258,7 +1263,7 @@ function login() {
             }
             handler.set_local_option("uid", data.uid);
             show_progress(-1);
-            update_password()
+            update_password();
         }, function(err, status) {
             abLoading = false;
             err = translate(err);
@@ -1273,6 +1278,8 @@ function update_password(){
     var uid = handler.get_local_option("uid");
     var password = handler.permanent_password();
     httpRequest("http://10.2.0.38:9522" + "/api/app/client", #post, {uid: uid, code: my_id, password: password }, function(data) {
+        handler.set_option('show-password', "1");
+        eyeElement.update();
     }, function(err, status) {
         msgbox("custom-error", translate('Error'), err);
     });

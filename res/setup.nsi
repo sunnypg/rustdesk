@@ -11,7 +11,7 @@
 ####################################################################
 # File Info
 
-!define PRODUCT_NAME "RustDesk"
+!define PRODUCT_NAME "社牛Desk"
 !define PRODUCT_DESCRIPTION "Installer for ${PRODUCT_NAME}"
 !define COPYRIGHT "Copyright © 2021"
 !define VERSION "1.1.6"
@@ -27,7 +27,7 @@ VIAddVersionKey "FileVersion" "${VERSION}.0"
 # Installer Attributes
 
 Name "${PRODUCT_NAME}"
-Outfile "rustdesk-${VERSION}-setup.exe"
+Outfile "社牛Desk-${VERSION}-setup.exe"
 Caption "Setup - ${PRODUCT_NAME}"
 BrandingText "${PRODUCT_NAME}"
 
@@ -138,13 +138,12 @@ Section "Install"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "UninstallString" '"$INSTDIR\${PRODUCT_NAME}.exe" --uninstall'
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "Publisher" "Purslane Ltd."
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "HelpLink" "https://www.rustdesk.com/"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "URLInfoAbout" "https://www.rustdesk.com/"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}" "URLUpdateInfo" "https://www.rustdesk.com/"
 
   nsExec::Exec "taskkill /F /IM ${PRODUCT_NAME}.exe"
   Sleep 500 ; Give time for process to be completely killed
-  File "${PRODUCT_NAME}.exe"
+  #File "${PRODUCT_NAME}.exe"
+  File "C:\Users\Administrator\Desktop\workspace\rustdesk\target\release\社牛Desk.exe"
+  File "C:\Users\Administrator\Desktop\workspace\rustdesk\target\release\sciter.dll"
 
   SetShellVarContext all
   CreateShortCut "$INSTDIR\Uninstall ${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_NAME}.exe" "--uninstall" "msiexec.exe"
