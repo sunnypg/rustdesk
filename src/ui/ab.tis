@@ -330,14 +330,7 @@ class SessionList: Reactor.Component {
                     <li #force-always-relay><span>{svg_checkmark}</span>{translate('Always connect via relay')}</li>
                     <li #rdp>RDP<EditRdpPort /></li>
                     <li #wol>{translate('WOL')}</li>
-                    <div .separator />
-                    {this.type != "lan" && <li #rename>{translate('Rename')}</li>}
-                    {this.type != "fav" && <li #remove>{translate('Remove')}</li>}
                     {is_win && <li #shortcut>{translate('Create desktop shortcut')}</li>}
-                    <li #forget-password>{translate('Forget Password')}</li>
-                    {(!this.type || this.type == "fav") && <li #add-fav>{translate('Add to Favorites')}</li>}
-                    {(!this.type || this.type == "fav") && <li #remove-fav>{translate('Remove from Favorites')}</li>}
-                    {this.type == "ab" && <li #edit-tag>{translate('Edit Tag')}</li>}
                 </menu>
             </popup>
             {sessions}
@@ -388,18 +381,18 @@ class SessionList: Reactor.Component {
         this.$(#rdp).style.set{
             display: (platform == "Windows" && is_win) ? "block" : "none",
         };
-        this.$(#forget-password).style.set{
-            display: handler.peer_has_password(id) ? "block" : "none",
-        };
-        if (!this.type || this.type == "fav") {
-            var in_fav = handler.get_fav().indexOf(id) >= 0;
-            this.$(#add-fav).style.set{
-                display: in_fav ? "none" : "block",
-            };
-            this.$(#remove-fav).style.set{
-                display: in_fav ? "block" : "none",
-            };
-        }
+        // this.$(#forget-password).style.set{
+        //     display: handler.peer_has_password(id) ? "block" : "none",
+        // };
+        // if (!this.type || this.type == "fav") {
+        //     var in_fav = handler.get_fav().indexOf(id) >= 0;
+        //     this.$(#add-fav).style.set{
+        //         display: in_fav ? "none" : "block",
+        //     };
+        //     this.$(#remove-fav).style.set{
+        //         display: in_fav ? "block" : "none",
+        //     };
+        // }
         // https://sciter.com/forums/topic/replacecustomize-context-menu/
         var menu = this.$(menu#remote-context);
         current_menu_peer_id = id;
@@ -537,12 +530,19 @@ class Favorites: Reactor.Component {
 class MultipleSessions: Reactor.Component {
     function render() {
         var type = getSessionsType();
+        MultipleSessionsComponent = this;
+        // <span class={!type ? 'active' : 'inactive'}>{translate('Recent sessions')}</span>
+        // <span #fav class={type == "fav" ? 'active' : 'inactive'}>{translate('Favorites')}</span>
+        // {handler.is_installed() && <span #lan class={type == "lan" ? 'active' : 'inactive'}>{translate('Discovered')}</span>}
+        // <SessionList sessions={handler.get_recent_sessions()} />
+
         return  <div style="size: *">
                 <div .sessions-bar>
                     <div style="width:*" .sessions-tab #sessions-type>
-                        <span class={!type ? 'active' : 'inactive'}>{translate('Recent sessions')}</span>
-                        <span #fav class={type == "fav" ? 'active' : 'inactive'}>{translate('Favorites')}</span>
-                        {handler.is_installed() && <span #lan class={type == "lan" ? 'active' : 'inactive'}>{translate('Discovered')}</span>}
+                        总数:<span>{pagination.total}</span>
+                        页数:<span>{pagination.current_page}/{pagination.total_pages}</span>
+                        <button #prev style="margin-right: 10px">&lt;</button>
+                        <button #next>&gt;</button>
                     </div>
                     {!this.hidden && <SearchBar type={type} />}
                     {!this.hidden && <SessionStyle type={type} />}
@@ -551,8 +551,21 @@ class MultipleSessions: Reactor.Component {
                 ((type == "fav" && <Favorites />) ||
                 (type == "lan" && handler.is_installed() && <LanPeers />) ||
                 (type == "ab" && <AddressBook />) ||
-                <SessionList sessions={handler.get_recent_sessions()} />)}
+                <SessionList sessions={sessions} />)}
             </div>;
+    }
+
+    event click $(button#prev) () {
+        if (pagination.current_page > 1){
+            pagination.current_page--
+            getSessionList()
+        }
+    }
+    event click $(button#next) () {
+        if (pagination.current_page < pagination.total_pages){
+            pagination.current_page++
+            getSessionList()
+        }
     }
 
     function stupidUpdate() {
@@ -594,6 +607,7 @@ class MultipleSessions: Reactor.Component {
     }
 }
 
+
 function discover() {
     handler.discover();
     var tries = 15;
@@ -621,7 +635,7 @@ class LanPeers: Reactor.Component {
         try {
             sessions = JSON.parse(handler.get_lan_peers());
         } catch (_) {}
-        return <SessionList sessions={sessions} type="lan" />;
+        return <SessionList sessions={sessions} type="lan" />
     }
 }
 

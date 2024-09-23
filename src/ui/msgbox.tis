@@ -211,6 +211,7 @@ class MsgboxComponent: Reactor.Component {
     }
     
     event click $(button#submit) {
+        stderr.println("type",this.type);
         if (this.type == "error") {
             if (this.hasRetry) {
                 retryConnect(true);
@@ -233,6 +234,7 @@ class MsgboxComponent: Reactor.Component {
             return;
         }
         var values = this.getValues();
+        stderr.println("values",JSON.stringify(values));
         if (this.callback) {
             var self = this;
             var err = this.callback(values, function(a=1, b='') { self.show_progress(a, b); });

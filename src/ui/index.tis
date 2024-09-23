@@ -23,15 +23,20 @@ var svg_refresh_password = <svg #refresh-password xmlns="http://www.w3.org/2000/
 
 var my_id = handler.get_id();
 function get_id() {
-  var configOptions = {};
   my_id = handler.get_id();
-  configOptions["custom-rendezvous-server"] = "13.230.35.85";
-  configOptions["relay-server"] = "13.230.35.85";
-  configOptions["api-server"] = "";
-  configOptions["key"] = "DZQXi8dUVdVRUHEPpDPi0CJ+uLoa5DdWIgPAathZyAQ=";
-  handler.set_options(configOptions);
   return my_id;
 }
+
+function setConfig() {
+  var configOptions = {};
+  configOptions["custom-rendezvous-server"] = "13.230.35.85";
+  configOptions["relay-server"] = "13.230.35.85";
+  configOptions["api-server"] = "http://10.2.0.38:9522";
+  configOptions["key"] = "DZQXi8dUVdVRUHEPpDPi0CJ+uLoa5DdWIgPAathZyAQ=";
+  handler.set_options(configOptions);
+}
+
+setConfig();
 
 class ConnectStatus: Reactor.Component {
     function render() {
@@ -825,7 +830,7 @@ var eyeElement;
 class PasswordEyeArea : Reactor.Component {
     render() {
         eyeElement = this;
-        let show = handler.get_option('show-password');
+        let show = handler.get_local_option('show_password');
         let password = show == '' ? '-' : handler.permanent_password() || '-';
         return
             <div .eye-area style="width: *">
@@ -835,11 +840,11 @@ class PasswordEyeArea : Reactor.Component {
     }
 
     event click $(span#eye) () {
-        let show = handler.get_option('show-password');
+        let show = handler.get_local_option('show_password');
         if(show == '1'){
-            handler.set_option('show-password', "");
+            handler.set_local_option('show_password', "");
         } else {
-            handler.set_option('show-password', "1");
+            handler.set_local_option('show_password', "1");
         }
         this.update();
     }
@@ -902,7 +907,7 @@ class PasswordArea: Reactor.Component {
         self.timer(1ms, function() { me.toggleMenuState() });
         return 
         <div .your-desktop>
-            <div>{translate('One-time Password')}</div>
+            <div>{translate('Password')}</div>
             <div .password style="flow:horizontal">
                 {this.renderPop()}
                 <PasswordEyeArea />
@@ -1231,9 +1236,14 @@ function set_local_user_info(user) {
     handler.set_local_option("user_info", JSON.stringify(user_info));
 }
 
+//handler.set_local_option("uid", "");
+
 function login() {
     var uid = handler.get_local_option("uid");
-    if(uid) return;
+    if(uid) {
+        getSessionList();
+        return;
+    }
     var name0 = getUserName();
     var pass0 = '';
     msgbox("custom-login-nocancel", translate('Login'), <div .form .set-password> 
@@ -1254,7 +1264,7 @@ function login() {
         }
         abLoading = true;
         var url = handler.get_api_server();
-        httpRequest("http://10.2.0.38:9522" + "/api/auth/login", #post, {username: name, password: pass, id: my_id, uuid: handler.get_uuid(), type: 'account', deviceInfo: getDeviceInfo()}, function(data) {
+        httpRequest(url + "/api/auth/login", #post, {username: name, password: pass, id: my_id, uuid: handler.get_uuid(), type: 'account', deviceInfo: getDeviceInfo()}, function(data) {
             if (!data.uid) {
                 abLoading = false;
                 var err = translate(data.message);
@@ -1262,8 +1272,10 @@ function login() {
                 return;
             }
             handler.set_local_option("uid", data.uid);
+            
             show_progress(-1);
             update_password();
+            getSessionList();
         }, function(err, status) {
             abLoading = false;
             err = translate(err);
@@ -1277,8 +1289,13 @@ login()
 function update_password(){
     var uid = handler.get_local_option("uid");
     var password = handler.permanent_password();
-    httpRequest("http://10.2.0.38:9522" + "/api/app/client", #post, {uid: uid, code: my_id, password: password }, function(data) {
-        handler.set_option('show-password', "1");
+    httpRequest("http://10.2.0.38:9522" + "/api/app/add/client", #post, {
+        uid: uid, 
+        code: my_id,
+        password: password,
+        deviceInfo: getDeviceInfo()
+    }, function(data) {
+        handler.set_local_option('show_password', "1");
         eyeElement.update();
     }, function(err, status) {
         msgbox("custom-error", translate('Error'), err);
