@@ -20,7 +20,7 @@ var pagination = {
 }
 function getSessionList() {
     var uid = handler.get_local_option("uid");
-    httpRequest("http://10.2.0.38:9522" + "/api/app/get/client", #post, {
+    httpRequest("https://reapi.sheniu.top" + "/api/app/get/client", #post, {
         uid: uid, 
         page: pagination.current_page,
         size: pagination.per_page,

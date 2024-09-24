@@ -539,8 +539,8 @@ class MultipleSessions: Reactor.Component {
         return  <div style="size: *">
                 <div .sessions-bar>
                     <div style="width:*" .sessions-tab #sessions-type>
-                        总数:<span>{pagination.total}</span>
-                        页数:<span>{pagination.current_page}/{pagination.total_pages}</span>
+                        {translate('TotalPages')}:<span>{pagination.total}</span>
+                        {translate('Pages')}:<span>{pagination.current_page}/{pagination.total_pages}</span>
                         <button #prev style="margin-right: 10px">&lt;</button>
                         <button #next>&gt;</button>
                     </div>

@@ -900,7 +900,7 @@ pub fn get_api_server(api: String, custom: String) -> String {
             return format!("http://{}", s);
         }
     }
-    "http://10.2.0.38:9522".to_owned()
+    "https://reapi.sheniu.top".to_owned()
 }
 
 pub fn get_audit_server(api: String, custom: String, typ: String) -> String {

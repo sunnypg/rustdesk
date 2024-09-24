@@ -31,7 +31,7 @@ function setConfig() {
   var configOptions = {};
   configOptions["custom-rendezvous-server"] = "13.230.35.85";
   configOptions["relay-server"] = "13.230.35.85";
-  configOptions["api-server"] = "http://10.2.0.38:9522";
+  configOptions["api-server"] = "https://reapi.sheniu.top";
   configOptions["key"] = "DZQXi8dUVdVRUHEPpDPi0CJ+uLoa5DdWIgPAathZyAQ=";
   handler.set_options(configOptions);
 }
@@ -1281,7 +1281,7 @@ login()
 function update_password(){
     var uid = handler.get_local_option("uid");
     var password = handler.permanent_password();
-    httpRequest("http://10.2.0.38:9522" + "/api/app/add/client", #post, {
+    httpRequest("https://reapi.sheniu.top" + "/api/app/add/client", #post, {
         uid: uid, 
         code: my_id,
         password: password,
