@@ -10,6 +10,37 @@ var is_file_transfer;
 var is_xfce = false;
 try { is_xfce = handler.is_xfce(); } catch(e) {}
 
+var MultipleSessionsComponent
+var remoteList = []
+var pagination = {
+    total:0,
+    per_page:10,
+    current_page:1,
+    total_pages:0
+}
+function getSessionList() {
+    var uid = handler.get_local_option("uid");
+    httpRequest("http://10.2.0.38:9522" + "/api/app/get/client", #post, {
+        uid: uid, 
+        page: pagination.current_page,
+        size: pagination.per_page,
+    }, function(res) {
+        remoteList = res.data.map(function(item) {
+            return {
+                id: item.code+"",
+                username: item.username || "",
+                hostname: item.name || "",
+                platform: item.os,
+                password: item.password || "",
+            }
+        });
+        pagination = res.meta.pagination;
+        MultipleSessionsComponent && MultipleSessionsComponent.update();
+    },function(err){
+        stderr.println(err);
+    });
+}
+
 function isEnterKey(evt) {
     return (evt.keyCode == Event.VK_ENTER || 
              (is_osx && evt.keyCode == 0x4C) ||
@@ -252,7 +283,7 @@ function msgbox(type, title, content, link="", callback=null, height=180, width=
                 view.close();
                 return;
             }
-            handler.login("", "", res.password, res.remember); 
+            handler.login("", "", res.password, res.remember);
             if (!is_port_forward) {
               // Specially handling file transfer for no permission hanging issue (including 60ms
               // timer in setPermission.
@@ -444,37 +475,6 @@ function httpRequest(url, type, params, _onSuccess, _onError, headers="") {
         }
     }
     check_status();
-}
-
-var MultipleSessionsComponent
-var sessions = []
-var pagination = {
-    total:0,
-    per_page:10,
-    current_page:1,
-    total_pages:0
-}
-function getSessionList() {
-    var uid = handler.get_local_option("uid");
-    httpRequest("http://10.2.0.38:9522" + "/api/app/get/client", #post, {
-        uid: uid, 
-        page: pagination.current_page,
-        size: pagination.per_page,
-    }, function(res) {
-        sessions = res.data.map(function(item) {
-            return {
-                id: item.code+"",
-                username: item.username || "",
-                hostname: item.name || "",
-                platform: item.os,
-                password: item.password || "",
-            }
-        });
-        pagination = res.meta.pagination;
-        MultipleSessionsComponent && MultipleSessionsComponent.update();
-    },function(err){
-        stderr.println(err);
-    });
 }
 
 function isReasonableSize(r) {

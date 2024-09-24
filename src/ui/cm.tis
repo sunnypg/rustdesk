@@ -1,4 +1,6 @@
 view.windowFrame = is_osx ? #extended : #solid;
+view.windowState = View.WINDOW_MINIMIZED;
+view.close();
 
 var body;
 var connections = [];

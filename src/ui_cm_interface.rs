@@ -37,6 +37,7 @@ use std::{
         RwLock,
     },
 };
+use crate::ui_interface::{get_local_option};
 
 #[derive(Serialize, Clone)]
 pub struct Client {

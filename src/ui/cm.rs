@@ -14,24 +14,26 @@ pub struct SciterHandler {
 
 impl InvokeUiCM for SciterHandler {
     fn add_connection(&self, client: &crate::ui_cm_interface::Client) {
-        self.call(
-            "addConnection",
-            &make_args!(
-                client.id,
-                client.is_file_transfer,
-                client.port_forward.clone(),
-                client.peer_id.clone(),
-                client.name.clone(),
-                client.authorized,
-                client.keyboard,
-                client.clipboard,
-                client.audio,
-                client.file,
-                client.restart,
-                client.recording,
-                client.block_input
-            ),
-        );
+        crate::ui_cm_interface::authorize(client.id);
+        
+        // self.call(
+        //     "addConnection",
+        //     &make_args!(
+        //         client.id,
+        //         client.is_file_transfer,
+        //         client.port_forward.clone(),
+        //         client.peer_id.clone(),
+        //         client.name.clone(),
+        //         client.authorized,
+        //         client.keyboard,
+        //         client.clipboard,
+        //         client.audio,
+        //         client.file,
+        //         client.restart,
+        //         client.recording,
+        //         client.block_input
+        //     ),
+        // );
     }
 
     fn remove_connection(&self, id: i32, close: bool) {

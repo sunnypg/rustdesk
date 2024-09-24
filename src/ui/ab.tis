@@ -551,7 +551,7 @@ class MultipleSessions: Reactor.Component {
                 ((type == "fav" && <Favorites />) ||
                 (type == "lan" && handler.is_installed() && <LanPeers />) ||
                 (type == "ab" && <AddressBook />) ||
-                <SessionList sessions={sessions} />)}
+                <SessionList sessions={remoteList} />)}
             </div>;
     }
 

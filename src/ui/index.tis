@@ -310,8 +310,8 @@ class MyIdMenu: Reactor.Component {
 
     function render() {
         return <div #myid>
-            {this.renderPop()}
-            ID{svg_menu}
+            {false && this.renderPop()}
+            ID{false && svg_menu}
         </div>;
     }
 
@@ -325,18 +325,11 @@ class MyIdMenu: Reactor.Component {
                 <li #enable-remote-restart><span>{svg_checkmark}</span>{translate('Enable remote restart')}</li> 
                 <li #enable-tunnel><span>{svg_checkmark}</span>{translate('Enable TCP tunneling')}</li>
                 {is_win ? <li #enable-block-input><span>{svg_checkmark}</span>{translate('Enable blocking user input')}</li> : ""}
-                <li #allow-lan-discovery><span>{svg_checkmark}</span>{translate('Enable LAN discovery')}</li>
                 <AudioInputs />
                 <Enhancements />
                 <li #allow-remote-config-modification><span>{svg_checkmark}</span>{translate('Enable remote configuration modification')}</li>
                 <div .separator />
-                <li #whitelist title={translate('whitelist_tip')}>{translate('IP Whitelisting')}</li>
                 <li #socks5-server>{translate('Socks5 Proxy')}</li>
-                <div .separator />
-                <li #stop-service class={service_stopped ? "line-through" : "selected"}><span>{svg_checkmark}</span>{translate("Enable service")}</li>
-                {is_win && handler.is_installed() ? <ShareRdp /> : ""}
-                <DirectServer />
-                {false && handler.using_public_server() && <li #allow-always-relay><span>{svg_checkmark}</span>{translate('Always connect via relay')}</li>}
                 <li #allow-darktheme><span>{svg_checkmark}</span>{translate('Dark Theme')}</li>
             </menu>
         </popup>;
@@ -626,7 +619,6 @@ class InstallMe: Reactor.Component {
         handler.goto_install();
     }
 }
-
 function download(from, to, args..) {
     var rqp = { type:#get, url: from, toFile: to };
     var fn = 0;
@@ -905,7 +897,7 @@ class PasswordArea: Reactor.Component {
     function render() {
         var me = this;
         self.timer(1ms, function() { me.toggleMenuState() });
-        return 
+        return <div></div>;
         <div .your-desktop>
             <div>{translate('Password')}</div>
             <div .password style="flow:horizontal">
