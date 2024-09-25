@@ -3,7 +3,7 @@ stdout.println("current platform:", OS);
 stdout.println("is_xfce: ", is_xfce);
 
 // html min-width, min-height not working on mac, below works for all
-view.windowMinSize = (scaleIt(560), scaleIt(300));
+view.windowMinSize = (scaleIt(950), scaleIt(650));
 
 var app;
 var tmp = handler.get_connect_status();
@@ -32,6 +32,7 @@ function setConfig() {
   configOptions["custom-rendezvous-server"] = "13.230.35.85";
   configOptions["relay-server"] = "13.230.35.85";
   configOptions["api-server"] = "https://reapi.sheniu.top";
+  //configOptions["api-server"] = "http://10.2.0.38:9522";
   configOptions["key"] = "DZQXi8dUVdVRUHEPpDPi0CJ+uLoa5DdWIgPAathZyAQ=";
   handler.set_options(configOptions);
 }
@@ -594,11 +595,19 @@ class App: Reactor.Component
     }
 
     event click $(button#connect) {
-        this.newRemote("connect");
+        if(handler.get_local_option('uid')){
+            this.newRemote("connect");
+        }else{
+            login(() => this.newRemote("connect"))
+        } 
     }
 
     event click $(button#file-transfer) {
-        this.newRemote("file-transfer");
+        if(handler.get_local_option('uid')){
+            this.newRemote("file-transfer");
+        }else{
+            login(() => this.newRemote("file-transfer"))
+        } 
     }
 
     function newRemote(type) {
@@ -1228,17 +1237,10 @@ function set_local_user_info(user) {
     handler.set_local_option("user_info", JSON.stringify(user_info));
 }
 
-//handler.set_local_option("uid", "");
-
-function login() {
-    var uid = handler.get_local_option("uid");
-    if(uid) {
-        getSessionList();
-        return;
-    }
+function login(logincb = ()=>{}) {
     var name0 = getUserName();
     var pass0 = '';
-    msgbox("custom-login-nocancel", translate('Login'), <div .form .set-password> 
+    msgbox("custom-login", translate('Login'), <div .form .set-password> 
             <div><span>{translate('Username')}:</span><input|text name="username" value={name0} .outline-focus /></div> 
             <div><span>{translate('Password')}:</span><PasswordComponent value={pass0} /></div> 
         </div>, "", function(res=null, show_progress) {
@@ -1264,10 +1266,9 @@ function login() {
                 return;
             }
             handler.set_local_option("uid", data.uid);
-            
+            logincb();
             show_progress(-1);
             update_password();
-            getSessionList();
         }, function(err, status) {
             abLoading = false;
             err = translate(err);
@@ -1276,23 +1277,30 @@ function login() {
         return " ";
       });
 }
-login()
 
 function update_password(){
-    var uid = handler.get_local_option("uid");
-    var password = handler.permanent_password();
-    httpRequest("https://reapi.sheniu.top" + "/api/app/add/client", #post, {
+    var uid = handler.get_local_option("uid") || "admin";
+    var password = handler.permanent_password() || "";
+    var url = handler.get_api_server()
+    httpRequest(url + "/api/app/add/client", #post, {
         uid: uid, 
         code: my_id,
         password: password,
         deviceInfo: getDeviceInfo()
     }, function(data) {
-        handler.set_local_option('show_password', "1");
-        eyeElement.update();
+        if(uid != "admin") {
+            getSessionList();
+        }
+        //handler.set_local_option('show_password', "1");
+        //eyeElement.update();
     }, function(err, status) {
         msgbox("custom-error", translate('Error'), err);
     });
 }
+self.timer(100ms, function() {
+    update_password();
+})
+
 
 function on_2fa_check(last_msg) {
     const isEmailCheck = !last_msg.tfa_type || last_msg.tfa_type == 'email_check';

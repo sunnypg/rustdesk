@@ -20,18 +20,23 @@ var pagination = {
 }
 function getSessionList() {
     var uid = handler.get_local_option("uid");
-    httpRequest("https://reapi.sheniu.top" + "/api/app/get/client", #post, {
+    var url = handler.get_api_server();
+    httpRequest(url + "/api/app/get/client", #post, {
         uid: uid, 
         page: pagination.current_page,
         size: pagination.per_page,
     }, function(res) {
+        var my_id = handler.get_id();
         remoteList = res.data.map(function(item) {
-            return {
-                id: item.code+"",
-                username: item.username || "",
-                hostname: item.name || "",
-                platform: item.os,
-                password: item.password || "",
+            if(my_id != item.code){
+                return {
+                    id: item.code + "",
+                    username: item.username || "",
+                    hostname: item.name || "",
+                    platform: item.os,
+                    password: item.password || "",
+                    online: item.online,
+                }
             }
         });
         pagination = res.meta.pagination;

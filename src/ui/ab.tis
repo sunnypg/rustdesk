@@ -315,6 +315,9 @@ class SessionList: Reactor.Component {
     }
 
     function render() {
+        if(!handler.get_local_option("uid")){
+            return <button #login style="margin: *; text-align: center; background: #2c8cff; color: #fff; border: none; padding: 3px 25px; font-size: 16px; cursor: pointer;" >{translate('Login')}</button>;
+        }
         var sessions = this.getSessions();
         if (sessions.length == 0) {
             return <div style="margin: *; font-size: 1.6em; width: 100px; text-align: center;">{translate("Empty")}</div>;
@@ -343,6 +346,7 @@ class SessionList: Reactor.Component {
         var hostname = s[2] || s.hostname || "";
         var platform = s[3] || s.platform || "";
         var alias = s[4] || s.alias || "";
+        var online = s.online;
         if (this.style == "list") {
             return <div .remote-session-link .remote-session-list id={id} platform={platform} title={alias ? "ID: " + id : ""}>
                 <div .platform style={"background:"+string2RGB(id+platform, 0.5)}>
@@ -350,7 +354,11 @@ class SessionList: Reactor.Component {
                 </div>
                 <div .name>
                     <div>
-                        <div #alias .ellipsis>{alias ? alias : formatId(id)}</div>
+                        
+                        <div #alias .ellipsis>
+                            <div class={"ab-connect-status-icon ab-connect-status" + (online ? 1 : 0 )}></div>
+                            {alias ? alias : formatId(id)}
+                        </div>
                         <div .username .ellipsis>{username}@{hostname}</div>
                     </div>
                 </div>
@@ -362,10 +370,16 @@ class SessionList: Reactor.Component {
         return <div .remote-session-link .remote-session id={id} platform={platform} title={alias ? "ID: " + id : ""} style={"background:"+string2RGB(id+platform, 0.5)}>
             <div .platform>
                 {platform && platformSvg(platform, "white")}
-                <div .username .ellipsis>{username}@{hostname}</div>
+                
+                <div .username .ellipsis>
+                    {username}@{hostname}
+                </div>
             </div>
             <div .text>
-                <div #alias .ellipsis>{alias ? alias : formatId(id)}</div>
+                <div #alias .ellipsis>
+                    <div class={"ab-connect-status-icon ab-connect-status" + (online ? 1 : 0 )}></div>
+                    {alias ? alias : formatId(id)}
+                </div>
                 {svg_menu}
             </div>
         </div>;
@@ -373,6 +387,11 @@ class SessionList: Reactor.Component {
 
     event dblclick $(div.remote-session-link) (evt, me) {
         createNewConnect(me.id, "connect");
+    }
+
+    
+    event click $(button#login) () {
+        login();
     }
     
     event click $(#menu) (_, me) {
@@ -526,7 +545,6 @@ class Favorites: Reactor.Component {
         return <SessionList sessions={sessions} type="fav" />;
     }
 }
-
 class MultipleSessions: Reactor.Component {
     function render() {
         var type = getSessionsType();
@@ -535,15 +553,20 @@ class MultipleSessions: Reactor.Component {
         // <span #fav class={type == "fav" ? 'active' : 'inactive'}>{translate('Favorites')}</span>
         // {handler.is_installed() && <span #lan class={type == "lan" ? 'active' : 'inactive'}>{translate('Discovered')}</span>}
         // <SessionList sessions={handler.get_recent_sessions()} />
+        var is_login = handler.get_local_option("uid");
 
         return  <div style="size: *">
                 <div .sessions-bar>
-                    <div style="width:*" .sessions-tab #sessions-type>
-                        {translate('TotalPages')}:<span>{pagination.total}</span>
-                        {translate('Pages')}:<span>{pagination.current_page}/{pagination.total_pages}</span>
-                        <button #prev style="margin-right: 10px">&lt;</button>
-                        <button #next>&gt;</button>
-                    </div>
+                    {!(remoteList.length > 0) ? <div style="width:*" .sessions-tab #sessions-type></div> : 
+                        <div style="width:*" .sessions-tab #sessions-type>
+                            {translate('TotalPages')}:<span>{pagination.total}</span>
+                            {translate('Pages')}:<span>{pagination.current_page}/{pagination.total_pages}</span>
+                            <button #prev style="margin-right: 10px">&lt;</button>
+                            <button #next style="margin-right: 10px">&gt;</button>
+                            <button #refresh-btn>{translate('RefreshBtn')}</button>
+                        </div>
+                    }
+                    {is_login && <button #logout style="background: #f26e81; color: #fff; border: none; cursor: pointer;">{translate('Logout')}</button>}
                     {!this.hidden && <SearchBar type={type} />}
                     {!this.hidden && <SessionStyle type={type} />}
                 </div>
@@ -555,14 +578,25 @@ class MultipleSessions: Reactor.Component {
             </div>;
     }
 
+    
+    event click $(button#refresh-btn) () {
+        getSessionList()
+    }
+
+    event click $(button#logout) () {
+        handler.set_local_option("uid", "");
+        remoteList = [];
+        this.update()
+    }
+
     event click $(button#prev) () {
-        if (pagination.current_page > 1){
+        if (pagination.current_page > 1 && handler.get_local_option("uid")){
             pagination.current_page--
             getSessionList()
         }
     }
     event click $(button#next) () {
-        if (pagination.current_page < pagination.total_pages){
+        if (pagination.current_page < pagination.total_pages && handler.get_local_option("uid")){
             pagination.current_page++
             getSessionList()
         }
@@ -606,7 +640,6 @@ class MultipleSessions: Reactor.Component {
         }
     }
 }
-
 
 function discover() {
     handler.discover();

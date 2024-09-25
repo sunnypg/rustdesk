@@ -43,10 +43,6 @@ InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
 !define MUI_ICON "icon.ico"
 !define MUI_ABORTWARNING
 !define MUI_LANGDLL_ALLLANGUAGES
-!define MUI_FINISHPAGE_SHOWREADME ""
-!define MUI_FINISHPAGE_SHOWREADME_NOTCHECKED
-!define MUI_FINISHPAGE_SHOWREADME_TEXT "Create desktop shortcut"
-!define MUI_FINISHPAGE_SHOWREADME_FUNCTION CreateDesktopShortcut
 !define MUI_FINISHPAGE_RUN "$INSTDIR\${PRODUCT_NAME}.exe"
 
 !insertmacro MUI_PAGE_DIRECTORY
@@ -91,6 +87,11 @@ Section "Install"
   nsExec::Exec 'sc start ${PRODUCT_NAME}'
 SectionEnd
 
+Section "Auto Run"
+  WriteRegStr HKCU "Software\Microsoft\Windows\CurrentVersion\Run" "${PRODUCT_NAME}""$INSTDIR\${PRODUCT_NAME}.exe"
+  CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_NAME}.exe"
+SectionEnd
+
 ####################################################################
 # Functions
 
@@ -104,8 +105,4 @@ Function .onInit
   SetRegView 64
 
   !insertmacro MUI_LANGDLL_DISPLAY
-FunctionEnd
-
-Function CreateDesktopShortcut
-  CreateShortCut "$DESKTOP\${PRODUCT_NAME}.lnk" "$INSTDIR\${PRODUCT_NAME}.exe"
 FunctionEnd

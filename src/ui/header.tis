@@ -140,7 +140,6 @@ class Header: Reactor.Component {
                 <div style="flow:horizontal;border-spacing: 0.5em;">{screens}</div>
                 {this.renderGlobalScreens()}
             </div>
-            <span #chat>{svg_chat}</span>
             <span #action>{svg_action}</span>
             <span #display>{svg_display}</span>
             <span #keyboard>{svg_keyboard}</span>
